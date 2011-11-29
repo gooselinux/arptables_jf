@@ -1,0 +1,32 @@
+--- arptables_jf-0.0.8/arptables.8.man	2005-06-09 11:18:29.000000000 -0400
++++ arptables_jf-0.0.8/arptables.8	2005-06-09 11:18:33.000000000 -0400
+@@ -97,9 +97,9 @@
+ .B "filter"
+ This is the default table (if no -t option is passed).  It contains
+ the built-in chains
+-.B INPUT
++.B IN
+ (for ARP packets entering the box),
+-.B OUTPUT
++.B OUT
+ (for locally-generated ARP packets).
+ .TP
+ .SH OPTIONS
+@@ -255,7 +255,7 @@
+ .BR "-i, --in-interface " "[!] \fIname\fP"
+ Name of an interface via which a packet is going to be received (only for
+ packets entering the 
+-.B INPUT
++.B IN
+ chain).  When the "!" argument is used before the interface name, the
+ sense is inverted.  If the interface name ends in a "+", then any
+ interface which begins with this name will match.  If this option is
+@@ -264,7 +264,7 @@
+ .BR "-o, --out-interface " "[!] \fIname\fP"
+ Name of an interface via which a packet is going to be sent (for packets
+ entering the
+-.B OUTPUT
++.B OUT
+ chain).  When the "!" argument is used before the interface name, the
+ sense is inverted.  If the interface name ends in a "+", then any
+ interface which begins with this name will match.  If this option is

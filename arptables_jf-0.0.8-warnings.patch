@@ -1,0 +1,23 @@
+diff -r -u arptables_jf-0.0.8/arptables.c arptables_jf-0.0.8.new/arptables.c
+--- arptables_jf-0.0.8/arptables.c	2004-01-23 15:22:27.000000000 -0500
++++ arptables_jf-0.0.8.new/arptables.c	2006-05-16 11:54:05.000000000 -0400
+@@ -505,7 +505,7 @@
+ }
+ 
+ static void
+-add_command(int *cmd, const int newcmd, const int othercmds, int invert)
++add_command(unsigned int *cmd, const int newcmd, const int othercmds, int invert)
+ {
+ 	if (invert)
+ 		exit_error(PARAMETER_PROBLEM, "unexpected ! flag");
+diff -r -u arptables_jf-0.0.8/netfilter_arp.h arptables_jf-0.0.8.new/netfilter_arp.h
+--- arptables_jf-0.0.8/netfilter_arp.h	2006-05-26 17:07:41.000000000 -0400
++++ arptables_jf-0.0.8.new/netfilter_arp.h	2006-05-26 17:17:00.000000000 -0400
+@@ -5,7 +5,6 @@
+  * (C)2002 Rusty Russell IBM -- This code is GPL.
+  */
+ 
+-#include <linux/config.h>
+ #include <linux/netfilter.h>
+ 
+ /* There is no PF_ARP. */

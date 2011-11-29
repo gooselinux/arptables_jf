@@ -1,0 +1,271 @@
+diff -up arptables_jf-0.0.8/arptables.init.initscript arptables_jf-0.0.8/arptables.init
+diff -up arptables_jf-0.0.8/arptables.init.initscript arptables_jf-0.0.8/arptables.init
+--- arptables_jf-0.0.8/arptables.init.initscript	2003-06-27 18:10:15.000000000 +0200
++++ arptables_jf-0.0.8/arptables.init	2010-03-24 08:43:26.511727157 +0100
+@@ -1,8 +1,20 @@
+ #!/bin/sh
+ #
++### BEGIN INIT INFO
++# Provides: arptables_jf
++# Required-Start: $local_fs $network
++# Required-Stop: $local_fs $network
++# Short-Description: userspace control program for the arptables network filter
++# Description: The arptables_jf utility controls the arpfilter network packet filtering
++#              code in the Linux kernel.  You do not need this program for normal
++#              network firewalling.  If you need to manually control which arp
++#              requests and/or replies this machine accepts and sends, you should
++#              install this package.
++### END INIT INFO
++
+ # Startup script to implement /etc/sysconfig/arptables pre-defined rules.
+ #
+-# chkconfig: 2345 08 92
++# chkconfig: - 08 92
+ #
+ # description: Automates a packet filtering firewall with arptables.
+ #
+@@ -21,17 +33,19 @@
+ ARPTABLES_CONFIG=/etc/sysconfig/arptables
+ 
+ if [ ! -x /sbin/arptables ]; then
+-	exit 0
++	exit 4
+ fi
+ 
+ KERNELMAJ=`uname -r | sed                   -e 's,\..*,,'`
+ KERNELMIN=`uname -r | sed -e 's,[^\.]*\.,,' -e 's,\..*,,'`
+ 
+ if [ "$KERNELMAJ" -lt 2 ] ; then
+-	exit 0
++	echo "Not supported for kernel $KERNELMAJ.$KERNELMIN"
++	exit 1
+ fi
+ if [ "$KERNELMAJ" -eq 2 -a "$KERNELMIN" -lt 3 ] ; then
+-	exit 0
++	echo "Not supported for kernel $KERNELMAJ.$KERNELMIN"
++	exit 1
+ fi
+ 
+ arp_table() {
+@@ -42,97 +56,104 @@ arp_table() {
+ 
+ start() {
+ 	# don't do squat if we don't have the config file
++	echo -n $"Starting arptables_jf"
+ 	if [ -f $ARPTABLES_CONFIG ]; then
+-	    # If we don't clear these first, we might be adding to
+-	    #  pre-existing rules.
+-	    chains=`cat /proc/net/arp_tables_names 2>/dev/null`
+-	    echo -n $"Flushing all current rules and user defined chains:"
+-	    let ret=0
+-            for i in $chains; do arptables -t $i -F; let ret+=$?; done
+-            arptables -F
+-            let ret+=$?
+-            if [ $ret -eq 0 ]; then
+-              success
+-            else
+-              failure
+-            fi
+-            echo
+-            echo -n $"Clearing all current rules and user defined chains:"
+-            let ret=0
+-            for i in $chains; do arptables -t $i -X; let ret+=$?; done
+-            arptables -X
+-            let ret+=$?
+-            if [ $ret -eq 0 ]; then
+-              success
+-            else
+-              failure
+-            fi
+-            echo
++		success
++		# If we don't clear these first, we might be adding to
++		# pre-existing rules.
++		chains=`cat /proc/net/arp_tables_names 2>/dev/null`
++		echo -n $"Flushing all current rules and user defined chains:"
++		let ret=0
++		for i in $chains; do arptables -t $i -F; let ret+=$?; done
++		arptables -F
++		let ret+=$?
++		if [ $ret -eq 0 ]; then
++			success
++		else
++			failure
++		fi
++		echo
++		echo -n $"Clearing all current rules and user defined chains:"
++		let ret=0
++		for i in $chains; do arptables -t $i -X; let ret+=$?; done
++		arptables -X
++		let ret+=$?
++		if [ $ret -eq 0 ]; then
++			success
++		else
++			failure
++		fi
++		echo
+ 
+-            for i in $chains; do arptables -t $i -Z; done
++		for i in $chains; do arptables -t $i -Z; done
+ 
+-	    echo -n $"Applying arptables firewall rules: "
++		echo -n $"Applying arptables firewall rules: "
+ 		grep -v "^[[:space:]]*#" $ARPTABLES_CONFIG | grep -v '^[[:space:]]*$' | /sbin/arptables-restore -c && \
+-		    success || \
+-		    failure 
+-	    echo
+-	    touch /var/lock/subsys/arptables
++			success || \
++			failure
++		echo
++		touch /var/lock/subsys/arptables
++	else
++		failure
++		echo
++		echo $"Configuration file /etc/sysconfig/arptables missing"
++		exit 6
+ 	fi
+ }
+ 
+ stop() {
+ 	chains=`cat /proc/net/arp_tables_names 2>/dev/null`
+-        echo -n $"Flushing all chains:"
+-        let ret=0
+-        for i in $chains; do arptables -t $i -F; let ret+=$?; done
+-        arptables -F; let ret+=$?
+-        if [ $ret -eq 0 ]; then
+-                success
+-        else
+-                failure
+-        fi
+-        echo
+-
+-        echo -n $"Removing user defined chains:"
+-        let ret=0
+-        for i in $chains; do arptables -t $i -X; let ret+=$?; done
+-        arptables -X; let ret+=$?
+-        if [ $ret -eq 0 ]; then
+-                success
+-        else
+-                failure
+-        fi
+-        echo
+-        echo -n $"Resetting built-in chains to the default ACCEPT policy:"
++	echo -n $"Flushing all chains:"
++	let ret=0
++	for i in $chains; do arptables -t $i -F; let ret+=$?; done
++	arptables -F; let ret+=$?
++	if [ $ret -eq 0 ]; then
++		success
++	else
++		failure
++	fi
++	echo
++
++	echo -n $"Removing user defined chains:"
++	let ret=0
++	for i in $chains; do arptables -t $i -X; let ret+=$?; done
++	arptables -X; let ret+=$?
++	if [ $ret -eq 0 ]; then
++		success
++	else
++		failure
++	fi
++	echo
++	echo -n $"Resetting built-in chains to the default ACCEPT policy:"
+ 	arp_table filter -P IN ACCEPT && \
+-	   arp_table filter -P OUT ACCEPT && \
+-	   success || \
+-	   failure 
++		arp_table filter -P OUT ACCEPT && \
++		success || \
++		failure
+ 	echo
+ 	rm -f /var/lock/subsys/arptables
+ }
+ 
+ case "$1" in
+-  start)
++start)
+ 	start
+ 	;;
+ 
+-  stop)
++stop)
+ 	stop
+ 	;;
+ 
+-  restart)
++restart|reload)
+ 	# "restart" is really just "start" as this isn't a daemon,
+-	#  and "start" clears any pre-defined rules anyway.
+-	#  This is really only here to make those who expect it happy
++	# and "start" clears any pre-defined rules anyway.
++	# This is really only here to make those who expect it happy
+ 	start
+ 	;;
+ 
+-  condrestart)
++condrestart|try-restart|force-reload)
+ 	[ -e /var/lock/subsys/arptables ] && start
+ 	;;
+ 
+-  status)
++status)
+ 	tables=`cat /proc/net/arp_tables_names 2>/dev/null`
+ 	for table in $tables; do
+ 		echo $"Table: $table"
+@@ -140,24 +161,24 @@ case "$1" in
+ 	done
+ 	;;
+ 
+-  panic)
+-	echo -n $"Changing target policies to DROP: "	
++panic)
++	echo -n $"Changing target policies to DROP: "
+ 	arp_table filter -P IN DROP && \
+-	    arp_table filter -P OUT DROP && \
+-	    success || failure
++		arp_table filter -P OUT DROP && \
++		success || failure
++	echo
++	echo -n "Flushing all chains:"
++	arp_table filter -F IN && \
++		arp_table filter -F OUT && \
++		success || failure
++	echo
++	echo -n "Removing user defined chains:"
++	arp_table filter -X && \
++		success || failure
+ 	echo
+-    echo -n "Flushing all chains:"
+-        arp_table filter -F IN && \
+-                arp_table filter -F OUT && \
+-                success || failure
+-    echo
+-    echo -n "Removing user defined chains:"
+-        arp_table filter -X && \
+-                success || failure
+-    echo
+-        ;;
++	;;
+ 
+-  save)
++save)
+ 	echo -n $"Saving current rules to $ARPTABLES_CONFIG: "
+ 	touch $ARPTABLES_CONFIG
+ 	chmod 600 $ARPTABLES_CONFIG
+@@ -167,10 +188,9 @@ case "$1" in
+ 	echo
+ 	;;
+ 
+-  *)
+-	echo $"Usage: $0 {start|stop|restart|condrestart|status|panic|save}"
+-	exit 1
++*)
++	echo $"Usage: $0 {start|stop|restart|condrestart|try-restart|force-reload|status|panic|save}"
++	exit 2
+ esac
+ 
+ exit 0
+-
